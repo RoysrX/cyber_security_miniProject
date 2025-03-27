@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DES3 Cipher Tool</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+    .input-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      resize: vertical;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    textarea {
+      min-height: 120px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      flex: 1;
+      transition: all 0.3s ease;
+    }
+    .encrypt-btn {
+      background-color: #3498db;
+      color: white;
+    }
+    .decrypt-btn {
+      background-color: #2ecc71;
+      color: white;
+    }
+    .clear-btn {
+      background-color: #e74c3c;
+      color: white;
+    }
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    .result {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #3498db;
+      word-break: break-all;
+    }
+    .status {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 600;
+      color: #7f8c8d;
+    }
+    .error {
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DES3 Cipher Tool</h1>
+    
+    <div class="input-group">
+      <label for="keyInput">Secret Key (16-24 characters recommended):</label>
+      <input type="text" id="keyInput" placeholder="Enter your secret key">
+    </div>
+    
+    <div class="input-group">
+      <label for="textInput">Text to Encrypt/Decrypt:</label>
+      <textarea id="textInput" placeholder="Enter text here..."></textarea>
+    </div>
+    
+    <div class="button-group">
+      <button class="encrypt-btn" id="encryptBtn">Encrypt</button>
+      <button class="decrypt-btn" id="decryptBtn">Decrypt</button>
+      <button class="clear-btn" id="clearBtn">Clear All</button>
+    </div>
+    
+    <div class="input-group">
+      <label for="resultOutput">Result:</label>
+      <div class="result" id="resultOutput"></div>
+    </div>
+    
+    <p class="status" id="statusMessage"></p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const keyInput = document.getElementById('keyInput');
+      const textInput = document.getElementById('textInput');
+      const resultOutput = document.getElementById('resultOutput');
+      const statusMessage = document.getElementById('statusMessage');
+      const encryptBtn = document.getElementById('encryptBtn');
+      const decryptBtn = document.getElementById('decryptBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      
+      // Generate a random key for initial use
+      keyInput.value = generateRandomKey(24);
+      
+      encryptBtn.addEventListener('click', function() {
+        try {
+          const key = keyInput.value;
+          const text = textInput.value;
+          
+          if (!key || !text) {
+            showError('Please provide both a key and text to encrypt.');
+            return;
+          }
+          
+          const encrypted = encryptText(text, key);
+          resultOutput.textContent = encrypted;
+          showStatus('Text encrypted successfully!');
+        } catch (error) {
+          showError('Encryption failed: ' + error.message);
+        }
+      });
+      
+      decryptBtn.addEventListener('click', function() {
+        try {
+          const key = keyInput.value;
+          const text = textInput.value;
+          
+          if (!key || !text) {
+            showError('Please provide both a key and text to decrypt.');
+            return;
+          }
+          
+          const decrypted = decryptText(text, key);
+          resultOutput.textContent = decrypted;
+          showStatus('Text decrypted successfully!');
+        } catch (error) {
+          showError('Decryption failed: ' + error.message);
+        }
+      });
+      
+      clearBtn.addEventListener('click', function() {
+        keyInput.value = '';
+        textInput.value = '';
+        resultOutput.textContent = '';
+        statusMessage.textContent = '';
+        statusMessage.classList.remove('error');
+      });
+      
+      function encryptText(text, key) {
+        // Create a consistent key using MD5 hash
+        const keyHash = CryptoJS.MD5(key).toString();
+        
+        // Encrypt using TripleDES
+        const encrypted = CryptoJS.TripleDES.encrypt(text, keyHash, {
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.Pkcs7
+        });
+        
+        return encrypted.toString();
+      }
+      
+      function decryptText(ciphertext, key) {
+        // Create a consistent key using MD5 hash
+        const keyHash = CryptoJS.MD5(key).toString();
+        
+        // Decrypt using TripleDES
+        const decrypted = CryptoJS.TripleDES.decrypt(ciphertext, keyHash, {
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.Pkcs7
+        });
+        
+        return decrypted.toString(CryptoJS.enc.Utf8);
+      }
+      
+      function generateRandomKey(length) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      }
+      
+      function showStatus(message) {
+        statusMessage.textContent = message;
+        statusMessage.classList.remove('error');
+      }
+      
+      function showError(message) {
+        statusMessage.textContent = message;
+        statusMessage.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>
